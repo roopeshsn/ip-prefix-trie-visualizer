@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP Prefix Trie Visualizer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>IP Prefix Trie Visualizer</h1>
+    <span class="badge">C++ &rarr; WebAssembly &rarr; D3.js</span>
+  </header>
+
+  <div class="main">
+    <aside class="sidebar">
+      <div class="panel">
+        <h2>Prefix Operations</h2>
+        <div class="input-row">
+          <input type="text" id="cidr-input" placeholder="e.g. 10.0.0.0/8" spellcheck="false">
+        </div>
+        <div class="input-row">
+          <button class="btn btn-insert" id="btn-insert">Insert</button>
+          <button class="btn btn-delete" id="btn-delete">Delete</button>
+        </div>
+        <div id="status" class="status"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Longest Prefix Match</h2>
+        <div class="input-row">
+          <input type="text" id="ip-input" placeholder="e.g. 10.1.2.3" spellcheck="false">
+          <button class="btn btn-lookup" id="btn-lookup">Lookup</button>
+        </div>
+        <div id="lookup-result" class="lookup-result"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Bulk Import</h2>
+        <textarea id="bulk-input" class="bulk-textarea" rows="4" placeholder="Paste CIDRs or BGP table output&#10;e.g. show ip bgp, route dumps&#10;*> 10.0.0.0/8  203.0.113.1  0 65000 i" spellcheck="false"></textarea>
+        <div class="input-row">
+          <button class="btn btn-insert" id="btn-bulk-import">Import</button>
+          <label class="btn btn-file">
+            Load File
+            <input type="file" id="bulk-file" accept=".txt,.csv" hidden>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>View Mode</h2>
+        <div class="toggle-group" id="view-toggle">
+          <button class="toggle-btn active" data-mode="standard">Standard</button>
+          <button class="toggle-btn" data-mode="compressed">Compressed</button>
+          <button class="toggle-btn" data-mode="patricia">PATRICIA</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Active Prefixes</h2>
+        <ul id="prefix-list" class="prefix-list">
+          <li class="prefix-list-empty">No prefixes inserted</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <button class="btn btn-clear" id="btn-clear">Clear All</button>
+        <button class="btn btn-reset-zoom" id="btn-reset-zoom">Reset Zoom</button>
+      </div>
+    </aside>
+
+    <div class="canvas-wrapper">
+      <div class="canvas">
+        <div id="empty-state" class="empty-state">
+          <p>Insert an IP prefix to begin</p>
+          <p class="hint">e.g. 10.0.0.0/8, 192.168.1.0/24</p>
+        </div>
+      </div>
+      <div class="stats-bar" id="stats-bar">
+        <span class="stat-item"><span class="stat-label">Nodes</span> <span id="stat-nodes">0</span></span>
+        <span class="stat-divider"></span>
+        <span class="stat-item"><span class="stat-label">Node Size</span> <span id="stat-node-size">0 B</span></span>
+        <span class="stat-divider"></span>
+        <span class="stat-item"><span class="stat-label">Total Memory</span> <span id="stat-total-mem">0 B</span></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="js/wasm-glue.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
