@@ -4,10 +4,23 @@ Interactive visualizer for three IP prefix trie variants — Standard, Compresse
 
 ## Quick Start
 
+### macOS
+
 ```sh
-brew install llvm    # prerequisite: LLVM with wasm32 support
-make serve           # builds WASM and starts server at http://localhost:8080
+brew install llvm
+make serve
 ```
+
+### Debian / Ubuntu
+
+```sh
+sudo apt-get update && sudo apt-get install -y clang lld
+make serve
+```
+
+Or just run `make setup` to install the toolchain for your platform, then `make serve`.
+
+Open http://localhost:8080.
 
 ## Usage
 

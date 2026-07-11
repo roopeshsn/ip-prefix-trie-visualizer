@@ -1,6 +1,10 @@
-# ---- Toolchain paths (brew install llvm) ----
-LLVM_PREFIX := $(shell brew --prefix llvm 2>/dev/null || echo /opt/homebrew/opt/llvm)
-CLANG       := $(LLVM_PREFIX)/bin/clang++
+# ---- Toolchain detection (macOS via Homebrew, Linux via system packages) ----
+LLVM_PREFIX := $(shell brew --prefix llvm 2>/dev/null)
+ifdef LLVM_PREFIX
+  CLANG := $(LLVM_PREFIX)/bin/clang++
+else
+  CLANG := clang++
+endif
 
 SOURCES  := src/trie.cpp src/ctrie.cpp src/ptrie.cpp
 CXXFLAGS := --target=wasm32-unknown-unknown -O2 -nostdlib -ffreestanding -fno-exceptions -fno-rtti
@@ -46,8 +50,14 @@ serve: all
 	python3 -m http.server 8080
 
 setup:
-	@echo "Installing LLVM via Homebrew (provides clang with wasm32 support)..."
-	brew install llvm
+	@if command -v brew >/dev/null 2>&1; then \
+		echo "Installing LLVM via Homebrew..."; \
+		brew install llvm; \
+	elif command -v apt-get >/dev/null 2>&1; then \
+		echo "Installing clang and lld via apt..."; \
+		sudo apt-get update && sudo apt-get install -y clang lld; \
+	else \
+		echo "Unsupported package manager. Install clang and lld with wasm32 support manually."; \
+	fi
 	@echo ""
-	@echo "Done. Make sure $(LLVM_PREFIX)/bin is accessible."
 	@echo "Run 'make' to build the WASM module."
