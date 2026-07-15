@@ -273,6 +273,16 @@ extern "C" const char* ctrie_lookup(const char* ip_str) {
             break;
         }
 
+        // Verify all edge bits match the search IP
+        int edge_end = child->depth < 32 ? child->depth : 32;
+        int mismatch = find_mismatch(ip, child->edge_key, cur_depth + 1, edge_end);
+        if (mismatch < edge_end) {
+            log_append(" --(mismatch at bit ");
+            log_int(mismatch);
+            log_append(")");
+            break;
+        }
+
         // Format edge label
         log_append(" --(");
         for (int i = node->depth; i < child->depth && i < 32; i++) {

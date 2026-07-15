@@ -212,7 +212,9 @@ const App = (() => {
     refresh();
   }
 
-  function buildPatriciaHighlight(graphData, ip) {
+  function buildPatriciaHighlight(graphData, ip, matchedPrefix) {
+    if (!matchedPrefix) return [];
+
     const parts = ip.split(".");
     if (parts.length !== 4) return [];
     let ipNum = 0;
@@ -222,10 +224,20 @@ const App = (() => {
       ipNum = (ipNum * 256 + v) >>> 0;
     }
 
+    function prefixCoversIp(prefix) {
+      if (!prefix) return false;
+      const m = prefix.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)\/(\d+)$/);
+      if (!m) return false;
+      const pfxIp = ((+m[1] << 24) | (+m[2] << 16) | (+m[3] << 8) | +m[4]) >>> 0;
+      const len = +m[5];
+      if (len === 0) return true;
+      const mask = (0xffffffff << (32 - len)) >>> 0;
+      return (ipNum & mask) === (pfxIp & mask);
+    }
+
     const nodeMap = {};
     graphData.nodes.forEach((n) => { nodeMap[n.id] = n; });
 
-    // Build adjacency: for each node, store its children edges by bit
     const adj = {};
     graphData.edges.forEach((e) => {
       if (!adj[e.from]) adj[e.from] = {};
@@ -235,15 +247,14 @@ const App = (() => {
     const root = graphData.nodes.find((n) => n.is_root);
     if (!root) return [];
 
-    const path = [root.id];
+    const traversed = [root.id];
     const visited = new Set([root.id]);
 
-    // First step: sentinel root always follows children[0]
     const rootEdge = adj[root.id] && adj[root.id]["0"];
-    if (!rootEdge || rootEdge.type !== "forward") return path;
+    if (!rootEdge || rootEdge.type !== "forward") return [];
 
     let curId = rootEdge.to;
-    path.push(curId);
+    traversed.push(curId);
     visited.add(curId);
 
     for (let safety = 0; safety < 64; safety++) {
@@ -256,19 +267,22 @@ const App = (() => {
 
       if (edge.type === "forward" && !visited.has(edge.to)) {
         curId = edge.to;
-        path.push(curId);
+        traversed.push(curId);
         visited.add(curId);
       } else {
-        // Back-pointer terminates the search
-        // Only add target if it's a different node (not self-loop)
         if (edge.to !== curId && !visited.has(edge.to)) {
-          path.push(edge.to);
+          traversed.push(edge.to);
         }
         break;
       }
     }
 
-    return path;
+    return traversed.filter((id) => {
+      const n = nodeMap[id];
+      if (!n) return false;
+      if (n.is_root) return true;
+      return n.prefix === matchedPrefix;
+    });
   }
 
   function annotatePaths(node, path) {
@@ -303,7 +317,7 @@ const App = (() => {
     let highlightPath = null;
     if (lastLookupResult && lastLookupResult.match && hasContent) {
       if (viewMode === "patricia" && data && data.nodes && data.edges) {
-        highlightPath = buildPatriciaHighlight(data, lastLookupResult.ip);
+        highlightPath = buildPatriciaHighlight(data, lastLookupResult.ip, lastLookupResult.match);
       } else {
         highlightPath = Visualizer.buildHighlightPath(
           data,
